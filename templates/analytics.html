@@ -1,0 +1,235 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="{% static 'css/style.css' %}" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <title>Algonavts</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      height: 100vh;
+      background: linear-gradient(to bottom, #004e66, #43003d);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      color: white;
+    }
+
+    table {
+      width: 80%;
+      margin: 20px auto;
+      border-collapse: collapse;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+      background-color: rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    th,
+    td {
+      padding: 15px 20px;
+      text-align: left;
+    }
+
+    th {
+      background-color: rgba(255, 255, 255, 0.2);
+      font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    tr:nth-child(even) {
+      background-color: rgba(255, 255, 255, 0.05);
+    }
+
+    tr:hover {
+      background-color: rgba(255, 255, 255, 0.2);
+      transition: background-color 0.3s;
+    }
+
+    .logo a {
+      text-decoration: none;
+      color: white;
+      font-size: 24px;
+    }
+
+    /* .chart-container {
+            width: 50%;
+            margin: 20px auto;
+        } */
+    .chart-container {
+     
+      display: flex;
+      flex-direction: row;
+      justify-content: space-around;
+      gap: 50px;
+      /* Расстояние между диаграммами */
+      margin-top: 150px;
+      margin-bottom: 30px;
+    }
+
+    .chart-box {
+      width: 400px;
+      /* Ширина каждой диаграммы */
+      height: 400px;
+      /* Высота каждой диаграммы */
+    }
+
+    .header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+    }
+  </style>
+
+</head>
+
+<body>
+  <header class="header">
+    <nav class="navbar">
+      <h2 class="logo"><a href="#">Algonavts</a></h2>
+      <input type="checkbox" id="menu-toggle" />
+      <label for="menu-toggle" id="hamburger-btn">
+        <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24">
+          <path d="M3 12h18M3 6h18M3 18h18" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+        </svg>
+      </label>
+
+    </nav>
+  </header>
+
+
+  <div class="chart-container">
+    <div class="chart-box" style="width: 80%; height: 80%">
+      <canvas id="pieChart"></canvas>
+    </div>
+    <div class="chart-box">
+      <canvas id="barChart" style="width: 80%; height: 100%"></canvas>
+    </div>
+  </div>
+  <!-- Safely include JSON data -->
+  {{ labels|json_script:"labels-data" }}
+  {{ pie_data|json_script:"pie-data" }}
+  {{ bar_data|json_script:"bar-data" }}
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      // Retrieve the data from the script tags
+      const labels = JSON.parse(document.getElementById('labels-data').textContent);
+      const pieData = JSON.parse(document.getElementById('pie-data').textContent);
+      const barData = JSON.parse(document.getElementById('bar-data').textContent);
+
+      // Pie Chart
+      const pieCtx = document.getElementById('pieChart').getContext('2d');
+      new Chart(pieCtx, {
+        type: 'pie',
+        data: {
+          labels: labels,
+          datasets: [{
+            data: pieData,
+            backgroundColor: [
+              'rgba(255, 99, 132, 0.2)',
+              'rgba(54, 162, 235, 0.2)',
+              'rgba(255, 206, 86, 0.2)',
+              'rgba(75, 192, 192, 0.2)',
+              'rgba(153, 102, 255, 0.2)',
+              'rgba(255, 159, 64, 0.2)'
+            ],
+            borderColor: [
+              'rgba(255, 99, 132, 1)',
+              'rgba(54, 162, 235, 1)',
+              'rgba(255, 206, 86, 1)',
+              'rgba(75, 192, 192, 1)',
+              'rgba(153, 102, 255, 1)',
+              'rgba(255, 159, 64, 1)'
+            ],
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: {
+              position: 'top',
+            },
+            tooltip: {
+              callbacks: {
+                label: function (context) {
+                  const label = context.label || '';
+                  const value = context.raw || 0;
+                  return `${label}: ${value}`;
+                }
+              }
+            }
+          }
+        }
+      });
+
+      // Bar Chart
+      const barCtx = document.getElementById('barChart').getContext('2d');
+      new Chart(barCtx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Average Confidence',
+            data: barData,
+            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+            borderColor: 'rgba(75, 192, 192, 1)',
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          scales: {
+            y: {
+              beginAtZero: true,
+              max: 1
+            }
+          },
+          plugins: {
+            legend: {
+              position: 'top',
+            },
+            tooltip: {
+              callbacks: {
+                label: function (context) {
+                  const label = context.dataset.label || '';
+                  const value = context.raw || 0;
+                  return `${label}: ${value.toFixed(2)}`;
+                }
+              }
+            }
+          }
+        }
+      });
+    });
+  </script>
+
+
+  <div class="tab">
+    <table>
+      <tr>
+        <th>Наименование</th>
+        <th>Количество</th>
+        <th>Точность</th>
+      </tr>
+      {% for data in class_data %}
+      <tr>
+          <td>{{ data.class_name }}</td>
+          <td>{{ data.count }}</td>
+          <td>{{ data.avg_confidence|floatformat:2 }}</td>
+      </tr>
+      {% endfor %}
+    </table>
+  </div>
+</body>
+
+</html>
