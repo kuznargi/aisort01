@@ -5,9 +5,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = 'django-insecure-koqdsmrfujvy5$2qlvtd5-ubfkk8l40g7ah%5tw)^qspe++7nf'
 
-DEBUG = True
+DEBUG = False
 
-ALLOWED_HOSTS = ['aisort01.onrender.com','localhost', '127.0.0.1']
+ALLOWED_HOSTS = ['aisort01.onrender.com','localhost', '127.0.0.1','0.0.0.0']
 
 
 # Application definition
