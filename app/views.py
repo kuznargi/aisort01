@@ -146,3 +146,7 @@ def process_frame(request):
 def index(request):
     """Главная страница."""
     return render(request, 'home.html')
+
+def solution(request):
+    """View для страницы Solution."""
+    return render(request, 'solution.html')
