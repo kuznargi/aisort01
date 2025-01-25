@@ -1,49 +1,84 @@
 {% load static %}
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Video Analysis</title>
-</head>
-<body>
-    <h1>AI Video Analysis</h1>
-    <video id="videoElement" autoplay></video>
-    <canvas id="canvasElement" style="display:none;"></canvas>
-
-    <script>
-        const video = document.getElementById('videoElement');
-        const canvas = document.getElementById('canvasElement');
-        const ctx = canvas.getContext('2d');
-
-        // Доступ к камере
-        navigator.mediaDevices.getUserMedia({ video: true })
-            .then((stream) => {
-                video.srcObject = stream;
-            })
-            .catch((error) => {
-                console.error("Ошибка камеры:", error);
-            });
-
-        // Отправляем кадры
-        function sendFrame() {
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-            const frame = canvas.toDataURL('image/jpeg');
-            fetch('/process_frame/', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ frame }),
-            })
-            .then((response) => response.json())
-            .then((data) => {
-                console.log(data);
-            });
-        }
-
-        setInterval(sendFrame, 1000);
-    </script>
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Algonavts</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  </head>
+  <body>
+    <header class="header">
+      <nav class="navbar">
+        <h2 class="logo"><a href="#">Algonavts</a></h2>
+        <input type="checkbox" id="menu-toggle" />
+        <label for="menu-toggle" id="hamburger-btn">
+          <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24">
+            <path d="M3 12h18M3 6h18M3 18h18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </label>
+       
+      </nav>
+    </header>
+    <section class="hero-section">
+      <div class="hero">
+        <h2>AISORT</h2>
+        <p>Это интеллектуальное решение для автоматизации охранных систем, распознавания объектов и упрощения инвентаризации. Оно повышает точность и скорость обработки данных, включая выявление угроз, классификацию объектов в реальном времени и оптимизацию инвентаризации, сокращая человеческий фактор и повышая эффективность управления.</p>
+        <div class="buttons">
+         
+          <a href="{% url 'test' %}" class="learn">Протестировать</a>
+        </div>
+      </div>
+      <div class="img">
+        <img src="{% static 'images/hero-bg.png' %}" alt="hero image" />
+      </div>
+    </section>
+    <section class="about-us">
+        <div class="about">
+          <img src="{% static 'images/team.png' %}" alt="girl.jpg" class="pic" />
+          <div class="text">
+            <h2>About Us</h2>
+           
+            <p style="margin-top: 20px;">Мы — команда Algonavts из Astana IT University (AITU), и наша работа объединяет искусственный интеллект, web-технологии и анимацию для создания интерактивных моделей, отражающих наши идеи и проекты. Мы используем передовые технологии для того, чтобы визуализировать сложные процессы, делая их более понятными, доступными и удобными для анализа. Наш подход сочетает техническую точность с креативным мышлением, позволяя преобразовать инженерные задачи в эстетически привлекательные и функциональные решения. Наша цель — показать, как современные технологии могут не только решать задачи, но и создавать визуально понятные модели, упрощающие их восприятие и применение.</p>
+            
+          </div>
+        </div>
+      </section>
+    <div class="we">
+    <h2 style="font-size: 50px; text-align: center;color:white">Почему наше решение лучшее?</h2>
+    <div class="card-list">
+        <a href="#" class="card-item">
+            <img src="{% static 'images/developer.jpg' %}" alt="Card Image">
+      
+            <h3>Разработка уникального ИИ</h3>
+            <h4 style="margin-top: 25px; color:white">Мы создали и обучили специализированный искусственный интеллект, который оптимизирует процессы в системе Allure. Это не просто инструмент, а интеллектуальная система, способная адаптироваться и улучшать производительность в режиме реального времени.</h4>
+        </a>
+        <a href="#" class="card-item">
+            <img src="{% static 'images/designer.jpg' %}" alt="Card Image">
+            <h3>Инженерный подход к совершенству</h3>
+            <h4 style="margin-top: 25px;  color:white">Мы интегрировали передовые инженерные практики с алгоритмами машинного обучения, чтобы создать максимально эффективное решение. Наш ИИ обучен на реальных данных и способен анализировать, предсказывать и предлагать лучшие варианты для оптимизации.</h3>
+            
+        </a>
+        <a href="#" class="card-item">
+            <img src="{% static 'images/editor.jpg' %}" alt="Card Image">
+            <h3>Вклад в индустрию</h3>
+            <h4 style="margin-top: 25px; color:white">Наше решение помогает компаниям экономить ресурсы, повышать производительность и снижать нагрузку на сотрудников. Это делает не только бизнес более успешным, но и открывает новые возможности для всей экосистемы Allure.</h3>
+           
+        </a>
+    </div>
+</div>
+<footer style="margin-top: 300px;background-color: black;  padding: 10px 20px; text-align: center; font-size: 14px;">
+  <div>
+    <p style="margin: 5px 0;color: white;">Наша цель — создавать решения, которые делают технологии доступнее и полезнее для всех.</p>
+    <p style="margin: 5px 0; color: white;">Разработчики: 
+      <a href="https://github.com/KapDan04" style="text-decoration: none; color: #007bff;">KapDan04</a>, 
+      <a href="https://github.com/kuznargi" style="text-decoration: none; color: #007bff;">Kuznargi</a>, 
+      <a href="https://github.com/Just-everyday-developer" style="text-decoration: none; color: #007bff;">Just-everyday-developer</a>, 
+      <a href="https://github.com/Yessenchik" style="text-decoration: none; color: #007bff;">Yessenchik</a>
+    </p>
+   
+  </div>
+</footer>
+  </body>
 </html>
