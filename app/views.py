@@ -6,90 +6,106 @@ from ultralytics import YOLO
 from collections import Counter
 import base64
 import numpy as np
+import imageio.v3 as iio
 import json
 
 # Глобальные данные для анализа
 global_boxes_data = []
 
-def find_working_camera():
-    """Находит первую работающую камеру."""
-    for index in range(10):  # Проверяем индексы от 0 до 9
-        cap = cv2.VideoCapture(index)
-        if cap.isOpened():
-            print(f"Камера найдена с индексом: {index}")
-            return cap
-        cap.release()
-    print("Нет доступных камер")
-    return None
-
 def gen_frames_yolo():
-    """Генерация видеопотока с использованием YOLO."""
-    global global_boxes_data
-    cap = find_working_camera()  # Поиск работающей камеры
-
-    if cap is None:
-        raise RuntimeError("Не удалось найти работающую камеру")
-
-    # Загружаем YOLO модель
-    model = YOLO('yolov8n.pt')
-
-    model_names = list(model.names.values())  # Классы модели
-
-    while True:
-        success, frame = cap.read()
-        if not success:
-            break
-
-        # Обрабатываем кадр с помощью YOLO
-        results = model.predict(frame, conf=0.25)
-
-        boxes_combined = []
-        if len(results) > 0:
-            boxes = results[0].boxes  # Получаем bounding boxes
-            for box in boxes:
-                x1, y1, x2, y2 = box.xyxy[0].tolist()  # Координаты
-                cls_id = int(box.cls[0])  # ID класса
-                conf = float(box.conf[0])  # Уверенность
-                class_name = model_names[cls_id] if cls_id < len(model_names) else "Unknown"
-
-                boxes_combined.append({
-                    'x1': x1,
-                    'y1': y1,
-                    'x2': x2,
-                    'y2': y2,
-                    'confidence': conf,
-                    'class_name': class_name,
-                })
-
-        # Обновляем данные для анализа
-        global_boxes_data = boxes_combined
-
-        # Рисуем результаты на кадре
-        for box in boxes_combined:
-            x1, y1, x2, y2 = int(box['x1']), int(box['y1']), int(box['x2']), int(box['y2'])
-            class_name = box['class_name']
-            confidence = box['confidence']
-            cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
-            cv2.putText(frame, f"{class_name} {confidence:.2f}", (x1, y1 - 10),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1)
-
-        # Кодируем кадр как JPEG
-        ret, buffer = cv2.imencode('.jpg', frame)
-        if not ret:
-            continue
-
-        frame_bytes = buffer.tobytes()
+    # Варианты источников видео (выберите один):
+    video_source = "http://127.0.0.1:8000/video_feed"
+    
+    # Загрузка модели YOLO
+    model = YOLO("yolov8n.pt")
+    
+    # Создание генератора кадров
+    for frame in iio.imiter(video_source, plugin="pyav"):
+        # Преобразование кадра в формат, подходящий для YOLO
+        yolo_frame = np.array(frame)
+        
+        # Обработка кадра с помощью YOLO
+        results = model.predict(yolo_frame, conf=0.5)
+        annotated_frame = results[0].plot()  # Визуализация результатов
+        
+        # Конвертация кадра в JPEG
+        _, buffer = cv2.imencode('.jpg', annotated_frame)
         yield (b'--frame\r\n'
-               b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
+               b'Content-Type: image/jpeg\r\n\r\n' + buffer.tobytes() + b'\r\n')
 
-    cap.release()
-
-def video_feed_yolo(request):
-    """Реальный видеопоток с YOLO."""
+def video_feed(request):
     return StreamingHttpResponse(
-        gen_frames_yolo(),
+        gen_frames_yolo(), 
         content_type='multipart/x-mixed-replace; boundary=frame'
     )
+# def gen_frames_yolo():
+#     """Генерация видеопотока с использованием YOLO."""
+#     global global_boxes_data
+#     cap = cv2.VideoCapture(1)  # Поиск работающей камеры
+
+#     if cap is None:
+#         raise RuntimeError("Не удалось найти работающую камеру")
+
+#     # Загружаем YOLO модель
+#     model = YOLO('yolov8n.pt')
+
+#     model_names = list(model.names.values())  # Классы модели
+
+#     while True:
+#         success, frame = cap.read()
+#         if not success:
+#             break
+
+#         # Обрабатываем кадр с помощью YOLO
+#         results = model.predict(frame, conf=0.25)
+
+#         boxes_combined = []
+#         if len(results) > 0:
+#             boxes = results[0].boxes  # Получаем bounding boxes
+#             for box in boxes:
+#                 x1, y1, x2, y2 = box.xyxy[0].tolist()  # Координаты
+#                 cls_id = int(box.cls[0])  # ID класса
+#                 conf = float(box.conf[0])  # Уверенность
+#                 class_name = model_names[cls_id] if cls_id < len(model_names) else "Unknown"
+
+#                 boxes_combined.append({
+#                     'x1': x1,
+#                     'y1': y1,
+#                     'x2': x2,
+#                     'y2': y2,
+#                     'confidence': conf,
+#                     'class_name': class_name,
+#                 })
+
+#         # Обновляем данные для анализа
+#         global_boxes_data = boxes_combined
+
+#         # Рисуем результаты на кадре
+#         for box in boxes_combined:
+#             x1, y1, x2, y2 = int(box['x1']), int(box['y1']), int(box['x2']), int(box['y2'])
+#             class_name = box['class_name']
+#             confidence = box['confidence']
+#             cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
+#             cv2.putText(frame, f"{class_name} {confidence:.2f}", (x1, y1 - 10),
+#                         cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1)
+
+#         # Кодируем кадр как JPEG
+#         ret, buffer = cv2.imencode('.jpg', frame)
+#         if not ret:
+#             continue
+
+#         frame_bytes = buffer.tobytes()
+#         yield (b'--frame\r\n'
+#                b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
+
+#     cap.release()
+
+# def video_feed_yolo(request):
+#     """Реальный видеопоток с YOLO."""
+#     return StreamingHttpResponse(
+#         gen_frames_yolo(),
+#         content_type='multipart/x-mixed-replace; boundary=frame'
+#     )
 
 def analysis(request):
     """Анализ обнаруженных объектов."""
